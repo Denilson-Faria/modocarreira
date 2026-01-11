@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQUAD MANAGER PRO - v22</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+        .input-field { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; font-size: 0.875rem; }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        
+        .pos-gl { background: #166534; color: #4ade80; } 
+        .pos-def { background: #1e40af; color: #93c5fd; } 
+        .pos-meio { background: #854d0e; color: #fde047; } 
+        .pos-ata { background: #991b1b; color: #fca5a5; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+        .sidebar-open { transform: translateX(0); }
+        .sidebar-closed { transform: translateX(100%); }
+
+        .ovr-low { background: #7f1d1d; color: #fca5a5; }
+        .ovr-mid { background: #854d0e; color: #fde047; }
+        .ovr-high { background: #065f46; color: #6ee7b7; }
+        
+        .tab-button { padding: 0.75rem 1.5rem; border-bottom: 2px solid transparent; transition: all 0.3s; }
+        .tab-button.active { border-bottom-color: #3b82f6; color: #3b82f6; background: #1e293b; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+    <!-- Modal Principal -->
+    <div id="modalOverlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="card w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <h2 id="modalTitle" class="text-xl font-bold mb-4 text-blue-400 italic uppercase">Ação</h2>
+            <div id="modalBody" class="space-y-4"></div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 text-slate-400">Cancelar</button>
+                <button id="modalConfirmBtn" class="px-6 py-2 bg-blue-600 rounded-lg font-bold">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar de Histórico -->
+    <div id="historySidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-slate-900 shadow-2xl z-40 sidebar-transition sidebar-closed border-l border-slate-700">
+        <div class="h-full flex flex-col">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-gradient-to-r from-slate-800 to-slate-900">
+                <h2 class="text-lg font-bold text-green-400 uppercase italic flex items-center gap-2">
+                    <i class="fas fa-history"></i> Histórico de Vendas
+                </h2>
+                <button onclick="closeSidebar()" class="text-slate-400 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="salesLogFull" class="space-y-3"></div>
+            </div>
+
+            <div class="p-6 border-t border-slate-700 bg-slate-800/50">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-slate-400 text-sm">Total de Transações:</span>
+                    <span id="totalTransactions" class="font-bold text-white">0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-sm">Lucro Acumulado:</span>
+                    <span id="totalProfitSidebar" class="font-bold text-green-400 text-lg">R$ 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-[1600px] mx-auto">
+        <!-- Botões de Backup -->
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold text-blue-400 italic uppercase">Squad Manager Pro</h1>
+            <div class="flex gap-2">
+                <button onclick="exportData()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-bold uppercase flex items-center gap-2">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+                <button onclick="document.getElementById('importFile').click()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-bold uppercase flex items-center gap-2">
+                    <i class="fas fa-upload"></i> Importar
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6 border-b border-slate-700">
+            <div class="flex gap-1">
+                <button class="tab-button active" onclick="switchTab('profissional')">
+                    <i class="fas fa-users"></i> Elenco Profissional
+                </button>
+                <button class="tab-button" onclick="switchTab('base')">
+                    <i class="fas fa-seedling"></i> Base/Academia
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab: Elenco Profissional -->
+        <div id="tab-profissional" class="tab-content active">
+            <!-- Cards de Resumo -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="card p-4 border-l-4 border-l-blue-500">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">Valor Elenco</p>
+                    <p id="squadValue" class="text-xl font-bold">R$ 0</p>
+                </div>
+                <div class="card p-4 border-l-4 border-l-orange-500">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">Emprestados</p>
+                    <p id="loanValue" class="text-xl font-bold text-orange-400">R$ 0</p>
+                </div>
+                <div class="card p-4 border-l-4 border-l-green-500 cursor-pointer hover:bg-slate-800/50 transition" onclick="openSidebar()">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-slate-400 text-[10px] uppercase font-bold">Lucro Total</p>
+                            <p id="totalProfit" class="text-xl font-bold text-green-400">R$ 0</p>
+                        </div>
+                        <i class="fas fa-external-link-alt text-green-400/50 text-sm"></i>
+                    </div>
+                </div>
+                <div class="card p-4 border-l-4 border-l-purple-500">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">Patrimônio</p>
+                    <p id="totalEquity" class="text-xl font-bold text-purple-300">R$ 0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Painel Esquerdo -->
+                <div class="lg:col-span-3 space-y-4">
+                    <div class="card p-5 border-blue-500/30">
+                        <h2 class="text-sm font-bold mb-4 text-blue-400 uppercase italic text-xs flex justify-between items-center">
+                            Novo Jogador
+                            <button onclick="openBulkRegisterModal()" class="text-[10px] bg-blue-500/20 px-2 py-1 rounded hover:bg-blue-500/30" title="Cadastro em Lote">
+                                <i class="fas fa-list"></i> Lote
+                            </button>
+                        </h2>
+                        <input type="text" id="regName" class="input-field mb-2" placeholder="Nome">
+                        <input type="text" id="regPos" class="input-field mb-2" placeholder="Posição (ZAG, VOL...)">
+                        <input type="number" id="regValue" class="input-field mb-2" placeholder="Valor Compra">
+                        <button onclick="registerPlayer()" class="w-full bg-blue-600 py-2 rounded-lg text-[10px] font-bold uppercase">Cadastrar</button>
+                    </div>
+
+                    <div class="card p-5 border-purple-500/30">
+                        <h2 class="text-sm font-bold mb-4 text-purple-400 uppercase italic text-xs">Simulador de Oferta</h2>
+                        <select id="simPlayer" class="input-field mb-2 text-xs"></select>
+                        <input type="number" id="simOffer" class="input-field mb-2" placeholder="Valor da Oferta">
+                        <div id="simResult" class="p-2 rounded bg-black/40 hidden text-xs mb-2 border border-slate-700 italic"></div>
+                        <button onclick="simulateOffer()" class="w-full bg-purple-600 py-2 rounded-lg text-[10px] font-bold uppercase">Analisar Saldo</button>
+                    </div>
+
+                    <div class="card p-5 border-green-500/30 bg-green-500/5">
+                        <h2 class="text-sm font-bold mb-4 text-green-400 uppercase italic text-xs">Venda Rápida</h2>
+                        <select id="quickSalePlayer" class="input-field mb-2 text-xs" onchange="updateQuickSalePreview()">
+                            <option value="">Selecionar Jogador...</option>
+                        </select>
+                        <div id="quickSaleCost" class="bg-black/40 p-2 rounded border border-slate-700 mb-2 hidden">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-400">Custo:</span>
+                                <span id="quickCostValue" class="font-mono text-white">R$ 0</span>
+                            </div>
+                        </div>
+                        <input type="number" id="quickSalePrice" class="input-field mb-2" placeholder="Valor da Venda" oninput="updateQuickSaleProfit()">
+                        <div id="quickSaleProfit" class="bg-black/40 p-2 rounded border border-slate-700 mb-2 hidden">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-400">Lucro:</span>
+                                <span id="quickProfitValue" class="font-bold text-lg positive">R$ 0</span>
+                            </div>
+                        </div>
+                        <button onclick="executeQuickSale()" class="w-full bg-green-600 py-2 rounded-lg text-[10px] font-bold uppercase">Vender e Lançar</button>
+                    </div>
+                </div>
+
+                <!-- Tabela Principal -->
+                <div class="lg:col-span-6">
+                    <div class="card p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-bold italic uppercase">Gestão de Elenco</h2>
+                            <input type="text" id="filterPos" onkeyup="updateUI()" class="input-field w-32 py-1 text-[10px]" placeholder="Buscar...">
+                        </div>
+                        <div class="overflow-y-auto max-h-[600px]">
+                            <table class="w-full text-sm">
+                                <tbody id="playerTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel Direito -->
+                <div class="lg:col-span-3 space-y-4">
+                    <div class="card p-5 border-orange-500/30">
+                        <h2 class="text-sm font-bold mb-4 text-orange-400 uppercase italic text-xs">Empréstimos</h2>
+                        <div id="loanList" class="space-y-2 text-[11px]"></div>
+                    </div>
+                    
+                    <div class="card p-5 border-green-500/30 bg-green-500/5 cursor-pointer hover:bg-green-500/10 transition" onclick="openSidebar()">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-sm font-bold text-green-400 uppercase italic text-xs">Últimas Vendas</h2>
+                            <i class="fas fa-arrow-right text-green-400 text-xs"></i>
+                        </div>
+                        <div id="salesLog" class="space-y-2 text-[11px]"></div>
+                        <div class="mt-4 pt-3 border-t border-slate-700 text-center">
+                            <button onclick="openSidebar()" class="text-green-400 text-[10px] uppercase font-bold hover:text-green-300 transition">
+                                Ver Histórico Completo <i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Base -->
+        <div id="tab-base" class="tab-content">
+            <!-- Cards de Resumo Base -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="card p-4 border-l-4 border-l-yellow-500">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">Jogadores na Base</p>
+                    <p id="youthCount" class="text-xl font-bold text-yellow-400">0</p>
+                </div>
+                <div class="card p-4 border-l-4 border-l-cyan-500">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">Overall Médio</p>
+                    <p id="avgOverall" class="text-xl font-bold text-cyan-400">0</p>
+                </div>
+                <div class="card p-4 border-l-4 border-l-pink-500">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">Potencial Médio</p>
+                    <p id="avgPotential" class="text-xl font-bold text-pink-400">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Painel Esquerdo Base -->
+                <div class="lg:col-span-4 space-y-4">
+                    <div class="card p-5 border-yellow-500/30">
+                        <h2 class="text-sm font-bold mb-4 text-yellow-400 uppercase italic text-xs flex justify-between items-center">
+                            Novo Jogador da Base
+                            <button onclick="openBulkYouthModal()" class="text-[10px] bg-yellow-500/20 px-2 py-1 rounded hover:bg-yellow-500/30" title="Cadastro em Lote">
+                                <i class="fas fa-list"></i> Lote
+                            </button>
+                        </h2>
+                        <input type="text" id="youthName" class="input-field mb-2" placeholder="Nome">
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <input type="number" id="youthAge" class="input-field" placeholder="Idade" min="14" max="23">
+                            <input type="text" id="youthPos" class="input-field" placeholder="Posição">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <input type="number" id="youthOverall" class="input-field" placeholder="Overall" min="40" max="99">
+                            <input type="number" id="youthPotential" class="input-field" placeholder="Potencial" min="40" max="99">
+                        </div>
+                        <input type="number" id="youthValue" class="input-field mb-2" placeholder="Valor Estimado">
+                        <button onclick="registerYouth()" class="w-full bg-yellow-600 py-2 rounded-lg text-[10px] font-bold uppercase">Cadastrar na Base</button>
+                    </div>
+                </div>
+
+                <!-- Tabela Base -->
+                <div class="lg:col-span-8">
+                    <div class="card p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-bold italic uppercase text-yellow-400">
+                                <i class="fas fa-seedling mr-2"></i>Academia/Base
+                            </h2>
+                            <input type="text" id="filterYouth" onkeyup="updateUI()" class="input-field w-32 py-1 text-[10px]" placeholder="Buscar...">
+                        </div>
+                        <div class="overflow-y-auto max-h-[600px]">
+                            <table class="w-full text-sm">
+                                <thead class="sticky top-0 bg-slate-800">
+                                    <tr class="border-b border-slate-600">
+                                        <th class="text-left py-2 text-[10px] text-slate-400">JOGADOR</th>
+                                        <th class="text-center py-2 text-[10px] text-slate-400">IDADE</th>
+                                        <th class="text-center py-2 text-[10px] text-slate-400">OVR</th>
+                                        <th class="text-center py-2 text-[10px] text-slate-400">POT</th>
+                                        <th class="text-right py-2 text-[10px] text-slate-400">VALOR</th>
+                                        <th class="text-right py-2 text-[10px] text-slate-400">AÇÕES</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="youthTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const initialSquad = [
+            { nome:"L. Júnior", pos:"GL", valor:23500000 }, { nome:"R. Rangel", pos:"GL", valor:6000000 },
+            { nome:"R. Asencio", pos:"ZAG", valor:30500000 }, { nome:"D. Leite", pos:"ZAG", valor:20500000 },
+            { nome:"R. Hutchinson", pos:"ZAG", valor:1700000 }, { nome:"S. Findlay", pos:"ZAG", valor:1300000 },
+            { nome:"J. Hobbs", pos:"ZAG", valor:975000 }, { nome:"S. Negru", pos:"ZAG", valor:850000 },
+            { nome:"J. Thorniley", pos:"ZAG", valor:425000 }, { nome:"J. Seys", pos:"LE", valor:28500000 },
+            { nome:"A. Doughty", pos:"LE", valor:6000000 }, { nome:"A. Freeman", pos:"LD", valor:17500000 },
+            { nome:"A. Ratiu", pos:"LD", valor:16500000 }, { nome:"P. Kioso", pos:"LD", valor:1100000 },
+            { nome:"R. Onyedika", pos:"VOL", valor:26500000 }, { nome:"N. Raskin", pos:"VOL", valor:25000000 },
+            { nome:"J. Acheampong", pos:"VOL", valor:10000000 }, { nome:"A. Freeman (J)", pos:"VOL", valor:925000 },
+            { nome:"R. Zalazar", pos:"MEI", valor:37000000 }, { nome:"C. Mouzakitis", pos:"MEI", valor:11500000 },
+            { nome:"L. Sibley", pos:"MEI", valor:1600000 }, { nome:"C. Brannagan", pos:"MC", valor:1300000 },
+            { nome:"G. Catamo", pos:"PTD", valor:26500000 }, { nome:"O. Dale", pos:"PTD", valor:775000 },
+            { nome:"J. Bahoya", pos:"PTE", valor:29000000 }, { nome:"D. Gassama", pos:"PTE", valor:7500000 },
+            { nome:"S. Dembélé", pos:"PTE", valor:1300000 }, { nome:"A. Bertaccini", pos:"ATA", valor:31000000 },
+            { nome:"D. Gül", pos:"ATA", valor:4100000 }, { nome:"W. Goodwin", pos:"ATA", valor:1100000 },
+            { nome:"T. Bradshaw", pos:"ATA", valor:375000 }
+        ];
+
+        let players = JSON.parse(localStorage.getItem('squad_v22')) || initialSquad;
+        let loans = JSON.parse(localStorage.getItem('loans_v22')) || [];
+        let sales = JSON.parse(localStorage.getItem('sales_v22')) || [];
+        let youth = JSON.parse(localStorage.getItem('youth_v22')) || [];
+
+        const posOrder = { 'GL':1, 'ZAG':2, 'LE':3, 'LD':4, 'VOL':5, 'MC':6, 'MEI':7, 'PTE':8, 'PTD':9, 'ATA':10 };
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        function formatMoney(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v); }
+
+        function getPosClass(pos) {
+            const p = pos.toUpperCase();
+            if (p === 'GL') return 'pos-gl';
+            if (['ZAG', 'LD', 'LE'].includes(p)) return 'pos-def';
+            if (['VOL', 'MC', 'MEI'].includes(p)) return 'pos-meio';
+            return 'pos-ata';
+        }
+
+        function getOvrClass(ovr) {
+            if (ovr >= 75) return 'ovr-high';
+            if (ovr >= 65) return 'ovr-mid';
+            return 'ovr-low';
+        }
+
+        function openSidebar() {
+            document.getElementById('historySidebar').classList.remove('sidebar-closed');
+            document.getElementById('historySidebar').classList.add('sidebar-open');
+            updateSalesHistory();
+        }
+
+        function closeSidebar() {
+            document.getElementById('historySidebar').classList.add('sidebar-closed');
+            document.getElementById('historySidebar').classList.remove('sidebar-open');
+        }
+
+        function updateSalesHistory() {
+            const salesFull = document.getElementById('salesLogFull');
+            salesFull.innerHTML = '';
+
+            if (sales.length === 0) {
+                salesFull.innerHTML = '<p class="text-slate-500 text-center italic">Nenhuma venda registrada</p>';
+                return;
+            }
+
+            let totalProfit = 0;
+            sales.slice().reverse().forEach((s, idx) => {
+                const profit = s.sale - s.cost;
+                totalProfit += profit;
+                salesFull.innerHTML += `
+                    <div class="card p-4 hover:bg-slate-800/50 transition">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p class="font-bold text-white">${s.nome}</p>
+                                <p class="text-[10px] text-slate-500">#${sales.length - idx}</p>
+                            </div>
+                            <button onclick="deleteSale(${sales.length - 1 - idx})" class="text-red-400 hover:text-red-300 text-xs">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+                            <div>
+                                <p class="text-slate-500">Custo</p>
+                                <p class="font-mono text-slate-300">${formatMoney(s.cost)}</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-500">Venda</p>
+                                <p class="font-mono text-slate-300">${formatMoney(s.sale)}</p>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-700">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400 text-xs">Lucro:</span>
+                                <span class="font-bold text-lg ${profit>=0?'positive':'negative'}">${formatMoney(profit)}</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-slate-500 text-[10px]">Margem:</span>
+                                <span class="text-slate-400 text-[10px] font-mono">${((profit/s.cost)*100).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('totalTransactions').innerText = sales.length;
+            document.getElementById('totalProfitSidebar').innerText = formatMoney(totalProfit);
+        }
+
+        function deleteSale(idx) {
+            if(confirm("Excluir esta venda do histórico?")) {
+                sales.splice(idx, 1);
+                updateUI();
+                updateSalesHistory();
+            }
+        }
+
+        function saveData() {
+            const data = {
+                players: players,
+                loans: loans,
+                sales: sales,
+                youth: youth,
+                lastUpdate: new Date().toISOString()
+            };
+            
+            localStorage.setItem('squad_v22', JSON.stringify(players));
+            localStorage.setItem('loans_v22', JSON.stringify(loans));
+            localStorage.setItem('sales_v22', JSON.stringify(sales));
+            localStorage.setItem('youth_v22', JSON.stringify(youth));
+            localStorage.setItem('squad_v22_backup', JSON.stringify(data));
+        }
+
+        function exportData() {
+            const data = {
+                players: players,
+                loans: loans,
+                sales: sales,
+                youth: youth,
+                exportDate: new Date().toISOString(),
+                version: 'v22'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `squad_manager_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Dados exportados com sucesso!\nGuarde este arquivo em local seguro.');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (confirm(`⚠️ ATENÇÃO!\n\nImportar dados irá SUBSTITUIR todos os dados atuais.\n\nArquivo: ${file.name}\nData: ${data.exportDate ? new Date(data.exportDate).toLocaleString('pt-BR') : 'Desconhecida'}\n\nDeseja continuar?`)) {
+                        players = data.players || [];
+                        loans = data.loans || [];
+                        sales = data.sales || [];
+                        youth = data.youth || [];
+                        
+                        saveData();
+                        updateUI();
+                        updateSalesHistory();
+                        
+                        alert('✅ Dados importados com sucesso!');
+                    }
+                } catch (error) {
+                    alert('❌ Erro ao importar arquivo!\nVerifique se é um arquivo válido.');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function updateUI() {
+            const pTable = document.getElementById('playerTable');
+            const lLog = document.getElementById('loanList');
+            const sLog = document.getElementById('salesLog');
+            const simSelect = document.getElementById('simPlayer');
+            const quickSaleSelect = document.getElementById('quickSalePlayer');
+            const youthTable = document.getElementById('youthTable');
+            const filter = document.getElementById('filterPos')?.value.toUpperCase() || '';
+            const filterY = document.getElementById('filterYouth')?.value.toUpperCase() || '';
+            
+            if(pTable) pTable.innerHTML = '';
+            if(lLog) lLog.innerHTML = '';
+            if(sLog) sLog.innerHTML = '';
+            if(simSelect) simSelect.innerHTML = '<option value="">Selecionar Atleta...</option>';
+            if(quickSaleSelect) quickSaleSelect.innerHTML = '<option value="">Selecionar Jogador...</option>';
+            if(youthTable) youthTable.innerHTML = '';
+
+            players.sort((a, b) => (posOrder[a.pos] || 99) - (posOrder[b.pos] || 99));
+
+            let squadSum = 0; let loanSum = 0; let profitSum = 0;
+
+            players.forEach((p, i) => {
+                if (filter === "" || p.pos.includes(filter) || p.nome.toUpperCase().includes(filter)) {
+                    squadSum += p.valor;
+                    if(pTable) {
+                        pTable.innerHTML += `
+                            <tr class="border-b border-slate-700/50 hover:bg-slate-800/30">
+                                <td class="py-3">
+                                    <span class="font-bold text-white text-xs">${p.nome}</span>
+                                    <span class="${getPosClass(p.pos)} px-1.5 py-0.5 rounded text-[8px] ml-1 font-black uppercase inline-block w-8 text-center">${p.pos}</span>
+                                </td>
+                                <td class="py-3 text-right font-mono text-[10px]">${formatMoney(p.valor)}</td>
+                                <td class="py-3 text-right space-x-2">
+                                    <button onclick="openEditModal(${i})" class="text-blue-400 hover:text-blue-300" title="Editar"><i class="fa fa-edit"></i></button>
+                                    <button onclick="sendToLoan(${i})" class="text-orange-400 hover:text-orange-300" title="Emprestar"><i class="fa fa-handshake"></i></button>
+                                    <button onclick="deletePlayer(${i})" class="text-red-500 hover:text-red-400" title="Excluir"><i class="fa fa-trash"></i></button>
+                                </td>
+                            </tr>`;
+                    }
+                    if(simSelect) simSelect.innerHTML += `<option value="${i}">${p.nome} (${p.pos})</option>`;
+                    if(quickSaleSelect) quickSaleSelect.innerHTML += `<option value="${i}">${p.nome} - ${formatMoney(p.valor)}</option>`;
+                }
+            });
+
+            loans.forEach((p, i) => {
+                loanSum += p.valor;
+                if(lLog) {
+                    lLog.innerHTML += `<div class="flex justify-between items-center border-b border-slate-800 pb-1">
+                        <span>${p.nome} <span class="text-slate-500">(${p.pos})</span></span>
+                        <button onclick="returnFromLoan(${i})" class="text-blue-400 font-bold">VOLTAR</button>
+                    </div>`;
+                }
+            });
+
+            sales.slice().reverse().slice(0, 5).forEach(s => {
+                const profit = s.sale - s.cost;
+                profitSum += profit;
+                if(sLog) {
+                    sLog.innerHTML += `<div class="flex justify-between border-b border-slate-800 pb-1 italic">
+                        <span class="truncate w-24">${s.nome}</span>
+                        <span class="${profit>=0?'positive':'negative'}">${formatMoney(profit)}</span>
+                    </div>`;
+                }
+            });
+
+            profitSum = sales.reduce((acc, s) => acc + (s.sale - s.cost), 0);
+
+            if(document.getElementById('squadValue')) document.getElementById('squadValue').innerText = formatMoney(squadSum);
+            if(document.getElementById('loanValue')) document.getElementById('loanValue').innerText = formatMoney(loanSum);
+            if(document.getElementById('totalProfit')) document.getElementById('totalProfit').innerText = formatMoney(profitSum);
+            if(document.getElementById('totalEquity')) document.getElementById('totalEquity').innerText = formatMoney(squadSum + loanSum + profitSum);
+
+            // Youth stats
+            let totalOvr = 0, totalPot = 0;
+            youth.forEach((y, i) => {
+                if (filterY === "" || y.pos.includes(filterY) || y.nome.toUpperCase().includes(filterY)) {
+                    totalOvr += y.overall;
+                    totalPot += y.potential;
+                    const growth = y.potential - y.overall;
+                    if(youthTable) {
+                        youthTable.innerHTML += `
+                            <tr class="border-b border-slate-700/50 hover:bg-slate-800/30">
+                                <td class="py-3">
+                                    <span class="font-bold text-white text-xs">${y.nome}</span>
+                                    <span class="${getPosClass(y.pos)} px-1.5 py-0.5 rounded text-[8px] ml-1 font-black uppercase inline-block w-8 text-center">${y.pos}</span>
+                                </td>
+                                <td class="py-3 text-center text-slate-300 text-xs">${y.age}</td>
+                                <td class="py-3 text-center">
+                                    <span class="${getOvrClass(y.overall)} px-2 py-0.5 rounded text-[10px] font-bold">${y.overall}</span>
+                                </td>
+                                <td class="py-3 text-center">
+                                    <span class="bg-pink-900/50 text-pink-300 px-2 py-0.5 rounded text-[10px] font-bold">${y.potential}</span>
+                                    ${growth > 0 ? `<span class="text-green-400 text-[9px] ml-1">+${growth}</span>` : ''}
+                                </td>
+                                <td class="py-3 text-right font-mono text-[10px] text-slate-300">${formatMoney(y.value)}</td>
+                                <td class="py-3 text-right space-x-2">
+                                    <button onclick="openEditYouthModal(${i})" class="text-blue-400 hover:text-blue-300" title="Editar"><i class="fa fa-edit"></i></button>
+                                    <button onclick="promoteYouth(${i})" class="text-green-500 hover:text-green-400" title="Promover"><i class="fa fa-arrow-up"></i></button>
+                                    <button onclick="deleteYouth(${i})" class="text-red-500 hover:text-red-400" title="Excluir"><i class="fa fa-trash"></i></button>
+                                </td>
+                            </tr>`;
+                    }
+                }
+            });
+
+            if(document.getElementById('youthCount')) document.getElementById('youthCount').innerText = youth.length;
+            if(document.getElementById('avgOverall')) document.getElementById('avgOverall').innerText = youth.length > 0 ? (totalOvr / youth.length).toFixed(0) : '0';
+            if(document.getElementById('avgPotential')) document.getElementById('avgPotential').innerText = youth.length > 0 ? (totalPot / youth.length).toFixed(0) : '0';
+
+            saveData();
+        }
+
+        function simulateOffer() {
+            const idx = document.getElementById('simPlayer').value;
+            const off = parseFloat(document.getElementById('simOffer').value);
+            const res = document.getElementById('simResult');
+            if(idx !== "" && off) {
+                const p = players[idx];
+                const prof = off - p.valor;
+                res.classList.remove('hidden');
+                res.innerHTML = `<p class="${prof>=0?'positive':'negative'} font-bold">Saldo: ${formatMoney(prof)}</p>
+                                 <p class="text-[10px] text-slate-400">Margem: ${((prof/p.valor)*100).toFixed(1)}%</p>`;
+            }
+        }
+
+        function registerPlayer() {
+            const n = document.getElementById('regName').value;
+            const p = document.getElementById('regPos').value.toUpperCase();
+            const v = parseFloat(document.getElementById('regValue').value);
+            if(n && p && v) {
+                players.push({nome: n, pos: p, valor: v});
+                document.getElementById('regName').value = '';
+                document.getElementById('regPos').value = '';
+                document.getElementById('regValue').value = '';
+                updateUI();
+            }
+        }
+
+        function registerYouth() {
+            const n = document.getElementById('youthName').value;
+            const age = parseInt(document.getElementById('youthAge').value);
+            const p = document.getElementById('youthPos').value.toUpperCase();
+            const ovr = parseInt(document.getElementById('youthOverall').value);
+            const pot = parseInt(document.getElementById('youthPotential').value);
+            const v = parseFloat(document.getElementById('youthValue').value);
+            
+            if(n && age && p && ovr && pot && v) {
+                if(pot < ovr) {
+                    alert('⚠️ O Potencial não pode ser menor que o Overall!');
+                    return;
+                }
+                youth.push({nome: n, age: age, pos: p, overall: ovr, potential: pot, value: v});
+                document.getElementById('youthName').value = '';
+                document.getElementById('youthAge').value = '';
+                document.getElementById('youthPos').value = '';
+                document.getElementById('youthOverall').value = '';
+                document.getElementById('youthPotential').value = '';
+                document.getElementById('youthValue').value = '';
+                updateUI();
+            }
+        }
+
+        function openEditModal(i) {
+            const p = players[i];
+            document.getElementById('modalTitle').innerText = "Editar Atleta";
+            document.getElementById('modalBody').innerHTML = `
+                <input type="text" id="editName" class="input-field" value="${p.nome}">
+                <input type="text" id="editPos" class="input-field" value="${p.pos}">
+                <input type="number" id="editVal" class="input-field" value="${p.valor}">
+            `;
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                players[i].nome = document.getElementById('editName').value;
+                players[i].pos = document.getElementById('editPos').value.toUpperCase();
+                players[i].valor = parseFloat(document.getElementById('editVal').value);
+                updateUI(); closeModal();
+            };
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function openEditYouthModal(i) {
+            const y = youth[i];
+            document.getElementById('modalTitle').innerText = "Editar Jogador da Base";
+            document.getElementById('modalBody').innerHTML = `
+                <input type="text" id="editYName" class="input-field mb-2" value="${y.nome}">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="number" id="editYAge" class="input-field" value="${y.age}">
+                    <input type="text" id="editYPos" class="input-field" value="${y.pos}">
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="number" id="editYOvr" class="input-field" value="${y.overall}">
+                    <input type="number" id="editYPot" class="input-field" value="${y.potential}">
+                </div>
+                <input type="number" id="editYVal" class="input-field" value="${y.value}">
+            `;
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                const ovr = parseInt(document.getElementById('editYOvr').value);
+                const pot = parseInt(document.getElementById('editYPot').value);
+                if(pot < ovr) {
+                    alert('⚠️ O Potencial não pode ser menor que o Overall!');
+                    return;
+                }
+                youth[i].nome = document.getElementById('editYName').value;
+                youth[i].age = parseInt(document.getElementById('editYAge').value);
+                youth[i].pos = document.getElementById('editYPos').value.toUpperCase();
+                youth[i].overall = ovr;
+                youth[i].potential = pot;
+                youth[i].value = parseFloat(document.getElementById('editYVal').value);
+                updateUI(); closeModal();
+            };
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function promoteYouth(i) {
+            if(confirm(`Promover ${youth[i].nome} para o elenco profissional?`)) {
+                const y = youth.splice(i, 1)[0];
+                players.push({nome: y.nome, pos: y.pos, valor: y.value});
+                updateUI();
+                alert(`✅ ${y.nome} promovido ao elenco profissional!`);
+            }
+        }
+
+        function updateQuickSalePreview() {
+            const idx = document.getElementById('quickSalePlayer').value;
+            const costDiv = document.getElementById('quickSaleCost');
+            const costValue = document.getElementById('quickCostValue');
+            const priceInput = document.getElementById('quickSalePrice');
+            
+            if(idx !== "") {
+                const player = players[idx];
+                costValue.innerText = formatMoney(player.valor);
+                costDiv.classList.remove('hidden');
+                
+                const suggestedPrice = Math.round(player.valor * 1.3);
+                priceInput.value = suggestedPrice;
+                updateQuickSaleProfit();
+            } else {
+                costDiv.classList.add('hidden');
+                document.getElementById('quickSaleProfit').classList.add('hidden');
+                priceInput.value = '';
+            }
+        }
+
+        function updateQuickSaleProfit() {
+            const idx = document.getElementById('quickSalePlayer').value;
+            const salePrice = parseFloat(document.getElementById('quickSalePrice').value);
+            const profitDiv = document.getElementById('quickSaleProfit');
+            const profitValue = document.getElementById('quickProfitValue');
+            
+            if(idx !== "" && salePrice) {
+                const player = players[idx];
+                const profit = salePrice - player.valor;
+                profitValue.innerText = formatMoney(profit);
+                profitValue.className = `font-bold text-lg ${profit >= 0 ? 'positive' : 'negative'}`;
+                profitDiv.classList.remove('hidden');
+            } else {
+                profitDiv.classList.add('hidden');
+            }
+        }
+
+        function executeQuickSale() {
+            const idx = document.getElementById('quickSalePlayer').value;
+            const salePrice = parseFloat(document.getElementById('quickSalePrice').value);
+            
+            if(idx !== "" && salePrice) {
+                const player = players.splice(idx, 1)[0];
+                sales.push({nome: player.nome, cost: player.valor, sale: salePrice});
+                
+                document.getElementById('quickSalePlayer').value = '';
+                document.getElementById('quickSalePrice').value = '';
+                document.getElementById('quickSaleCost').classList.add('hidden');
+                document.getElementById('quickSaleProfit').classList.add('hidden');
+                
+                updateUI();
+                updateSalesHistory();
+                
+                alert(`✅ ${player.nome} vendido por ${formatMoney(salePrice)}!\nLucro: ${formatMoney(salePrice - player.valor)}`);
+            } else {
+                alert('⚠️ Selecione um jogador e informe o valor da venda');
+            }
+        }
+
+        function openBulkRegisterModal() {
+            document.getElementById('modalTitle').innerText = "Cadastro em Lote - Elenco Profissional";
+            document.getElementById('modalBody').innerHTML = `
+                <p class="text-xs text-slate-400 mb-2">Cole a lista de jogadores (um por linha):</p>
+                <p class="text-[10px] text-slate-500 mb-3 italic">Formato: Nome, Posição, Valor</p>
+                <textarea id="bulkData" class="input-field h-48 font-mono text-xs" placeholder="Neymar, ATA, 50000000
+Casemiro, VOL, 30000000
+Alisson, GL, 40000000"></textarea>
+                <p class="text-[10px] text-yellow-400 mt-2"><i class="fas fa-info-circle"></i> Aceita vírgula (,) traço (-) ou pipe (|) como separador</p>
+            `;
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                const text = document.getElementById('bulkData').value;
+                const lines = text.split('\n').filter(l => l.trim());
+                let count = 0;
+                
+                lines.forEach(line => {
+                    const parts = line.split(/[,|\-]/).map(p => p.trim());
+                    if(parts.length >= 3) {
+                        const nome = parts[0];
+                        const pos = parts[1].toUpperCase();
+                        const valor = parseFloat(parts[2].replace(/[^\d]/g, ''));
+                        if(nome && pos && valor) {
+                            players.push({nome, pos, valor});
+                            count++;
+                        }
+                    }
+                });
+                
+                updateUI();
+                closeModal();
+                alert(`✅ ${count} jogador(es) cadastrado(s) com sucesso!`);
+            };
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function openBulkYouthModal() {
+            document.getElementById('modalTitle').innerText = "Cadastro em Lote - Base";
+            document.getElementById('modalBody').innerHTML = `
+                <p class="text-xs text-slate-400 mb-2">Cole a lista de jogadores da base (um por linha):</p>
+                <p class="text-[10px] text-slate-500 mb-3 italic">Formato: Nome, Idade, Posição, Overall, Potencial, Valor</p>
+                <textarea id="bulkYouthData" class="input-field h-48 font-mono text-xs" placeholder="João Silva, 17, ATA, 65, 82, 5000000
+Pedro Santos, 16, VOL, 60, 78, 3000000
+Lucas Oliveira, 18, ZAG, 68, 80, 4000000"></textarea>
+                <p class="text-[10px] text-yellow-400 mt-2"><i class="fas fa-info-circle"></i> Aceita vírgula (,) traço (-) ou pipe (|) como separador</p>
+            `;
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                const text = document.getElementById('bulkYouthData').value;
+                const lines = text.split('\n').filter(l => l.trim());
+                let count = 0;
+                
+                lines.forEach(line => {
+                    const parts = line.split(/[,|\-]/).map(p => p.trim());
+                    if(parts.length >= 6) {
+                        const nome = parts[0];
+                        const age = parseInt(parts[1]);
+                        const pos = parts[2].toUpperCase();
+                        const overall = parseInt(parts[3]);
+                        const potential = parseInt(parts[4]);
+                        const value = parseFloat(parts[5].replace(/[^\d]/g, ''));
+                        
+                        if(nome && age && pos && overall && potential && value && potential >= overall) {
+                            youth.push({nome, age, pos, overall, potential, value});
+                            count++;
+                        }
+                    }
+                });
+                
+                updateUI();
+                closeModal();
+                alert(`✅ ${count} jogador(es) da base cadastrado(s) com sucesso!`);
+            };
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function sendToLoan(i) { loans.push(players.splice(i, 1)[0]); updateUI(); }
+        function returnFromLoan(i) { players.push(loans.splice(i, 1)[0]); updateUI(); }
+        function deletePlayer(i) { if(confirm("Excluir jogador?")) { players.splice(i,1); updateUI(); } }
+        function deleteYouth(i) { if(confirm("Excluir jogador da base?")) { youth.splice(i,1); updateUI(); } }
+        function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+
+        updateUI();
+    </script>
+</body>
+</html>
