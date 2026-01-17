@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQUAD MANAGER PRO - v22</title>
+    <title>SQUAD MANAGER PRO - v23</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -115,6 +115,126 @@
         .tab-content.active {
             display: block;
         }
+
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .success-icon {
+            animation: successPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes successPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .alert-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .modal-content {
+                max-width: 95vw;
+                margin: 0 auto;
+            }
+
+            .grid-mobile {
+                grid-template-columns: 1fr !important;
+            }
+
+            .hide-mobile {
+                display: none !important;
+            }
+
+            .text-mobile-sm {
+                font-size: 0.75rem !important;
+            }
+
+            .overflow-x-scroll {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table-mobile {
+                display: block;
+                width: 100%;
+            }
+
+            .table-mobile tr {
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 8px;
+                background: #1e293b;
+            }
+
+            .table-mobile td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 6px 0 !important;
+                border: none !important;
+            }
+
+            .table-mobile td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                color: #94a3b8;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0.5rem !important;
+            }
+
+            .card {
+                padding: 1rem !important;
+            }
+
+            h1 {
+                font-size: 1.25rem !important;
+            }
+
+            .input-field {
+                font-size: 0.75rem !important;
+                padding: 8px !important;
+            }
+        }
     </style>
 </head>
 
@@ -122,13 +242,137 @@
 
     <!-- Modal Principal -->
     <div id="modalOverlay"
-        class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div class="card w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h2 id="modalTitle" class="text-xl font-bold mb-4 text-blue-400 italic uppercase">Ação</h2>
-            <div id="modalBody" class="space-y-4"></div>
-            <div class="flex justify-end gap-3 mt-6">
-                <button onclick="closeModal()" class="px-4 py-2 text-slate-400">Cancelar</button>
-                <button id="modalConfirmBtn" class="px-6 py-2 bg-blue-600 rounded-lg font-bold">Confirmar</button>
+        class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/70 modal-backdrop">
+        <div class="card w-full max-w-2xl p-0 max-h-[90vh] overflow-hidden shadow-2xl modal-content border-2 border-slate-600">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-5 border-b border-blue-500">
+                <h2 id="modalTitle" class="text-xl font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                    <i class="fas fa-cog"></i> Ação
+                </h2>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                <div id="modalBody" class="space-y-4"></div>
+            </div>
+            <div class="flex justify-end gap-3 p-5 bg-slate-800/50 border-t border-slate-700">
+                <button onclick="closeModal()" 
+                    class="px-6 py-2.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg font-semibold transition-all">
+                    Cancelar
+                </button>
+                <button id="modalConfirmBtn" 
+                    class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Boas-Vindas/Changelog -->
+    <div id="welcomeModal"
+        class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 bg-black/80 modal-backdrop">
+        <div class="card w-full max-w-3xl p-0 max-h-[90vh] overflow-hidden shadow-2xl modal-content border-2 border-blue-500">
+            <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-6 text-center">
+                <div class="text-6xl mb-3 animate-bounce">🎉</div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white uppercase tracking-wide mb-2">
+                    Atualização v23!
+                </h2>
+                <p class="text-blue-100 text-sm">Squad Manager Pro acabou de ficar ainda melhor!</p>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-250px)]">
+                <div class="space-y-6">
+                    <!-- Feature 1 -->
+                    <div class="card p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/30">
+                        <div class="flex items-start gap-3">
+                            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-folder-open text-xl text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-white mb-1 text-lg">🗂️ Sistema de Múltiplas Carreiras</h3>
+                                <p class="text-slate-300 text-sm mb-2">Agora você pode criar e gerenciar várias carreiras simultaneamente!</p>
+                                <ul class="text-xs text-slate-400 space-y-1">
+                                    <li>✓ Crie quantas carreiras quiser</li>
+                                    <li>✓ Alterne entre elas a qualquer momento</li>
+                                    <li>✓ Cada carreira mantém seus próprios dados</li>
+                                    <li>✓ Renomeie e organize como preferir</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 2 -->
+                    <div class="card p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/30">
+                        <div class="flex items-start gap-3">
+                            <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-window-maximize text-xl text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-white mb-1 text-lg">✨ Modais Redesenhados</h3>
+                                <p class="text-slate-300 text-sm mb-2">Interface completamente renovada com modais modernos e intuitivos!</p>
+                                <ul class="text-xs text-slate-400 space-y-1">
+                                    <li>✓ Design profissional com animações suaves</li>
+                                    <li>✓ Feedback visual em todas as ações</li>
+                                    <li>✓ Confirmações duplas para ações críticas</li>
+                                    <li>✓ Ícones grandes e informativos</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="card p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/30">
+                        <div class="flex items-start gap-3">
+                            <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-mobile-alt text-xl text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-white mb-1 text-lg">📱 Totalmente Responsivo</h3>
+                                <p class="text-slate-300 text-sm mb-2">Experiência perfeita em qualquer dispositivo!</p>
+                                <ul class="text-xs text-slate-400 space-y-1">
+                                    <li>✓ Layout otimizado para celular e tablet</li>
+                                    <li>✓ Tabelas transformadas em cards no mobile</li>
+                                    <li>✓ Botões grandes e fáceis de tocar</li>
+                                    <li>✓ Navegação fluida em telas pequenas</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature 4 -->
+                    <div class="card p-4 bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/30">
+                        <div class="flex items-start gap-3">
+                            <div class="w-12 h-12 bg-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-rocket text-xl text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-white mb-1 text-lg">🚀 Melhorias Gerais</h3>
+                                <ul class="text-xs text-slate-400 space-y-1">
+                                    <li>✓ Sistema de backup e restauração aprimorado</li>
+                                    <li>✓ Confirmações visuais em todas as ações</li>
+                                    <li>✓ Performance otimizada</li>
+                                    <li>✓ Animações e transições suaves</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tip -->
+                    <div class="card p-4 bg-blue-500/10 border border-blue-500/30">
+                        <div class="flex items-start gap-2">
+                            <i class="fas fa-lightbulb text-yellow-400 text-lg mt-0.5"></i>
+                            <div>
+                                <p class="text-sm text-slate-300 font-semibold mb-1">💡 Dica:</p>
+                                <p class="text-xs text-slate-400">
+                                    Clique no botão com o nome da carreira no topo para acessar o gerenciador de carreiras e criar suas novas saves!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 bg-slate-800/50 border-t border-slate-700 text-center">
+                <button onclick="closeWelcomeModal()" 
+                    class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg font-bold text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                    <i class="fas fa-check mr-2"></i>Entendi! Vamos começar! 🚀
+                </button>
+                <p class="text-xs text-slate-500 mt-3">Você pode revisar essas informações a qualquer momento</p>
             </div>
         </div>
     </div>
@@ -166,29 +410,47 @@
 
     <div class="max-w-[1600px] mx-auto">
         <!-- Botões de Backup -->
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold text-blue-400 italic uppercase">Squad Manager Pro</h1>
-            <div class="flex gap-2">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <h1 class="text-xl sm:text-2xl font-bold text-blue-400 italic uppercase flex items-center gap-2">
+                    Squad Manager Pro
+                    <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded font-normal">v23</span>
+                </h1>
+                <button onclick="openCareerSelector()" 
+                    class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold uppercase flex items-center gap-2 border border-slate-600 w-full sm:w-auto justify-center">
+                    <i class="fas fa-folder-open"></i> <span id="currentCareerName">Carreira 1</span>
+                </button>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                <button onclick="openChangelogModal()"
+                    class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-xs font-bold uppercase flex items-center gap-2 justify-center"
+                    title="Ver Novidades">
+                    <i class="fas fa-star"></i> <span class="hidden sm:inline">Novidades</span>
+                </button>
+                <button onclick="openCareerManagementModal()"
+                    class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-xs font-bold uppercase flex items-center gap-2 justify-center">
+                    <i class="fas fa-cog"></i> <span class="hidden sm:inline">Gerenciar</span><span class="sm:hidden">Carreiras</span>
+                </button>
                 <button onclick="exportData()"
-                    class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-bold uppercase flex items-center gap-2">
-                    <i class="fas fa-download"></i> Exportar
+                    class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-bold uppercase flex items-center gap-2 justify-center">
+                    <i class="fas fa-download"></i> <span class="hidden sm:inline">Exportar</span>
                 </button>
                 <button onclick="document.getElementById('importFile').click()"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-bold uppercase flex items-center gap-2">
-                    <i class="fas fa-upload"></i> Importar
+                    class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-bold uppercase flex items-center gap-2 justify-center">
+                    <i class="fas fa-upload"></i> <span class="hidden sm:inline">Importar</span>
                 </button>
                 <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
             </div>
         </div>
 
         <!-- Tabs -->
-        <div class="mb-6 border-b border-slate-700">
-            <div class="flex gap-1">
-                <button class="tab-button active" onclick="switchTab('profissional')">
-                    <i class="fas fa-users"></i> Elenco Profissional
+        <div class="mb-6 border-b border-slate-700 overflow-x-auto">
+            <div class="flex gap-1 min-w-max">
+                <button class="tab-button active whitespace-nowrap" onclick="switchTab('profissional')">
+                    <i class="fas fa-users"></i> <span class="hidden sm:inline">Elenco </span>Profissional
                 </button>
-                <button class="tab-button" onclick="switchTab('base')">
-                    <i class="fas fa-seedling"></i> Base/Academia
+                <button class="tab-button whitespace-nowrap" onclick="switchTab('base')">
+                    <i class="fas fa-seedling"></i> Base<span class="hidden sm:inline">/Academia</span>
                 </button>
             </div>
         </div>
@@ -223,7 +485,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Painel Esquerdo -->
-                <div class="lg:col-span-3 space-y-4">
+                <div class="lg:col-span-3 space-y-4 order-2 lg:order-1">
                     <div class="card p-5 border-blue-500/30">
                         <h2
                             class="text-sm font-bold mb-4 text-blue-400 uppercase italic text-xs flex justify-between items-center">
@@ -280,23 +542,26 @@
                 </div>
 
                 <!-- Tabela Principal -->
-                <div class="lg:col-span-6">
-                    <div class="card p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-bold italic uppercase">Gestão de Elenco</h2>
+                <div class="lg:col-span-6 order-1 lg:order-2">
+                    <div class="card p-3 sm:p-5">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                            <h2 class="text-base sm:text-lg font-bold italic uppercase">Gestão de Elenco</h2>
                             <input type="text" id="filterPos" onkeyup="updateUI()"
-                                class="input-field w-32 py-1 text-[10px]" placeholder="Buscar...">
+                                class="input-field w-full sm:w-32 py-1 text-[10px]" placeholder="Buscar...">
                         </div>
-                        <div class="overflow-y-auto max-h-[600px]">
-                            <table class="w-full text-sm">
-                                <tbody id="playerTable"></tbody>
-                            </table>
+                        <div class="overflow-x-auto -mx-3 sm:mx-0">
+                            <div class="min-w-[500px] sm:min-w-0">
+                                <table class="w-full text-sm hidden sm:table">
+                                    <tbody id="playerTable"></tbody>
+                                </table>
+                                <div id="playerTableMobile" class="block sm:hidden"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Painel Direito -->
-                <div class="lg:col-span-3 space-y-4">
+                <div class="lg:col-span-3 space-y-4 order-3">
                     <div class="card p-5 border-orange-500/30">
                         <h2 class="text-sm font-bold mb-4 text-orange-400 uppercase italic text-xs">Empréstimos</h2>
                         <div id="loanList" class="space-y-2 text-[11px]"></div>
@@ -340,7 +605,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Painel Esquerdo Base -->
-                <div class="lg:col-span-4 space-y-4">
+                <div class="lg:col-span-4 space-y-4 order-2 lg:order-1">
                     <div class="card p-5 border-yellow-500/30">
                         <h2
                             class="text-sm font-bold mb-4 text-yellow-400 uppercase italic text-xs flex justify-between items-center">
@@ -371,29 +636,32 @@
                 </div>
 
                 <!-- Tabela Base -->
-                <div class="lg:col-span-8">
-                    <div class="card p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-bold italic uppercase text-yellow-400">
+                <div class="lg:col-span-8 order-1 lg:order-2">
+                    <div class="card p-3 sm:p-5">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                            <h2 class="text-base sm:text-lg font-bold italic uppercase text-yellow-400">
                                 <i class="fas fa-seedling mr-2"></i>Academia/Base
                             </h2>
                             <input type="text" id="filterYouth" onkeyup="updateUI()"
-                                class="input-field w-32 py-1 text-[10px]" placeholder="Buscar...">
+                                class="input-field w-full sm:w-32 py-1 text-[10px]" placeholder="Buscar...">
                         </div>
-                        <div class="overflow-y-auto max-h-[600px]">
-                            <table class="w-full text-sm">
-                                <thead class="sticky top-0 bg-slate-800">
-                                    <tr class="border-b border-slate-600">
-                                        <th class="text-left py-2 text-[10px] text-slate-400">JOGADOR</th>
-                                        <th class="text-center py-2 text-[10px] text-slate-400">IDADE</th>
-                                        <th class="text-center py-2 text-[10px] text-slate-400">OVR</th>
-                                        <th class="text-center py-2 text-[10px] text-slate-400">POT</th>
-                                        <th class="text-right py-2 text-[10px] text-slate-400">VALOR</th>
-                                        <th class="text-right py-2 text-[10px] text-slate-400">AÇÕES</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="youthTable"></tbody>
-                            </table>
+                        <div class="overflow-x-auto -mx-3 sm:mx-0">
+                            <div class="min-w-[600px] sm:min-w-0">
+                                <table class="w-full text-sm hidden sm:table">
+                                    <thead class="sticky top-0 bg-slate-800">
+                                        <tr class="border-b border-slate-600">
+                                            <th class="text-left py-2 text-[10px] text-slate-400">JOGADOR</th>
+                                            <th class="text-center py-2 text-[10px] text-slate-400">IDADE</th>
+                                            <th class="text-center py-2 text-[10px] text-slate-400">OVR</th>
+                                            <th class="text-center py-2 text-[10px] text-slate-400">POT</th>
+                                            <th class="text-right py-2 text-[10px] text-slate-400">VALOR</th>
+                                            <th class="text-right py-2 text-[10px] text-slate-400">AÇÕES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="youthTable"></tbody>
+                                </table>
+                                <div id="youthTableMobile" class="block sm:hidden"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -403,6 +671,8 @@
 
     <script>
 
+        const APP_VERSION = 'v23';
+        
         if (!localStorage.getItem('initialized_v22')) {
             localStorage.removeItem('squad_v22');
             localStorage.removeItem('loans_v22');
@@ -413,10 +683,25 @@
         const initialSquad = [];
 
 
-        let players = JSON.parse(localStorage.getItem('squad_v22')) || initialSquad;
-        let loans = JSON.parse(localStorage.getItem('loans_v22')) || [];
-        let sales = JSON.parse(localStorage.getItem('sales_v22')) || [];
-        let youth = JSON.parse(localStorage.getItem('youth_v22')) || [];
+        let currentCareer = localStorage.getItem('currentCareer_v22') || 'carreira_1';
+        let careers = JSON.parse(localStorage.getItem('careers_v22')) || {};
+        
+        // Inicializa a carreira atual se não existir
+        if (!careers[currentCareer]) {
+            careers[currentCareer] = {
+                name: 'Carreira 1',
+                players: [],
+                loans: [],
+                sales: [],
+                youth: [],
+                createdAt: new Date().toISOString()
+            };
+        }
+
+        let players = careers[currentCareer].players || [];
+        let loans = careers[currentCareer].loans || [];
+        let sales = careers[currentCareer].sales || [];
+        let youth = careers[currentCareer].youth || [];
 
         const posOrder = { 'GL': 1, 'ZAG': 2, 'LE': 3, 'LD': 4, 'VOL': 5, 'MC': 6, 'MEI': 7, 'PTE': 8, 'PTD': 9, 'ATA': 10 };
 
@@ -508,27 +793,40 @@
         }
 
         function deleteSale(idx) {
-            if (confirm("Excluir esta venda do histórico?")) {
-                sales.splice(idx, 1);
-                updateUI();
-                updateSalesHistory();
-            }
+            const sale = sales[idx];
+            showConfirmModal(
+                'Excluir Venda',
+                `Tem certeza que deseja excluir a venda de <strong class="text-blue-400">${sale.nome}</strong> do histórico?<br><br>Esta ação não pode ser desfeita!`,
+                () => {
+                    sales.splice(idx, 1);
+                    updateUI();
+                    updateSalesHistory();
+                    showSuccessModal(
+                        'Venda Excluída',
+                        `<div class="text-center">
+                            <div class="success-icon mb-4">
+                                <i class="fas fa-trash-alt text-6xl text-red-400"></i>
+                            </div>
+                            <p class="text-white">Venda removida do histórico!</p>
+                        </div>`
+                    );
+                }
+            );
         }
 
         function saveData() {
-            const data = {
+            careers[currentCareer] = {
+                name: careers[currentCareer].name,
                 players: players,
                 loans: loans,
                 sales: sales,
                 youth: youth,
-                lastUpdate: new Date().toISOString()
+                lastUpdate: new Date().toISOString(),
+                createdAt: careers[currentCareer].createdAt
             };
 
-            localStorage.setItem('squad_v22', JSON.stringify(players));
-            localStorage.setItem('loans_v22', JSON.stringify(loans));
-            localStorage.setItem('sales_v22', JSON.stringify(sales));
-            localStorage.setItem('youth_v22', JSON.stringify(youth));
-            localStorage.setItem('squad_v22_backup', JSON.stringify(data));
+            localStorage.setItem('careers_v22', JSON.stringify(careers));
+            localStorage.setItem('currentCareer_v22', currentCareer);
         }
 
         function exportData() {
@@ -551,7 +849,19 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            alert('✅ Dados exportados com sucesso!\nGuarde este arquivo em local seguro.');
+            showSuccessModal(
+                'Backup Criado!',
+                `<div class="text-center">
+                    <div class="success-icon mb-4">
+                        <i class="fas fa-download text-6xl text-purple-400"></i>
+                    </div>
+                    <p class="text-xl font-bold text-white mb-2">Dados exportados com sucesso!</p>
+                    <p class="text-sm text-slate-400">Guarde este arquivo em local seguro.</p>
+                    <div class="mt-4 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                        <p class="text-xs text-purple-300">📁 ${a.download}</p>
+                    </div>
+                </div>`
+            );
         }
 
         function importData(event) {
@@ -563,20 +873,60 @@
                 try {
                     const data = JSON.parse(e.target.result);
 
-                    if (confirm(`⚠️ ATENÇÃO!\n\nImportar dados irá SUBSTITUIR todos os dados atuais.\n\nArquivo: ${file.name}\nData: ${data.exportDate ? new Date(data.exportDate).toLocaleString('pt-BR') : 'Desconhecida'}\n\nDeseja continuar?`)) {
-                        players = data.players || [];
-                        loans = data.loans || [];
-                        sales = data.sales || [];
-                        youth = data.youth || [];
+                    showConfirmModal(
+                        'Importar Dados',
+                        `<div class="space-y-3">
+                            <p class="text-white">⚠️ Importar dados irá <strong class="text-red-400">SUBSTITUIR</strong> todos os dados atuais.</p>
+                            <div class="card p-3 bg-slate-800">
+                                <p class="text-xs text-slate-400 mb-1">Arquivo:</p>
+                                <p class="text-sm text-white font-mono">${file.name}</p>
+                            </div>
+                            <div class="card p-3 bg-slate-800">
+                                <p class="text-xs text-slate-400 mb-1">Data do Backup:</p>
+                                <p class="text-sm text-white">${data.exportDate ? new Date(data.exportDate).toLocaleString('pt-BR') : 'Desconhecida'}</p>
+                            </div>
+                            <p class="text-yellow-400 text-sm">Deseja continuar?</p>
+                        </div>`,
+                        () => {
+                            players = data.players || [];
+                            loans = data.loans || [];
+                            sales = data.sales || [];
+                            youth = data.youth || [];
 
-                        saveData();
-                        updateUI();
-                        updateSalesHistory();
+                            saveData();
+                            updateUI();
+                            updateSalesHistory();
 
-                        alert('✅ Dados importados com sucesso!');
-                    }
+                            showSuccessModal(
+                                'Importação Concluída!',
+                                `<div class="text-center">
+                                    <div class="success-icon mb-4">
+                                        <i class="fas fa-upload text-6xl text-blue-400"></i>
+                                    </div>
+                                    <p class="text-xl font-bold text-white mb-2">Dados importados com sucesso!</p>
+                                    <div class="grid grid-cols-2 gap-2 mt-4">
+                                        <div class="card p-2 bg-slate-800">
+                                            <p class="text-xs text-slate-400">Profissionais</p>
+                                            <p class="text-lg font-bold text-blue-400">${players.length}</p>
+                                        </div>
+                                        <div class="card p-2 bg-slate-800">
+                                            <p class="text-xs text-slate-400">Base</p>
+                                            <p class="text-lg font-bold text-yellow-400">${youth.length}</p>
+                                        </div>
+                                    </div>
+                                </div>`
+                            );
+                        }
+                    );
                 } catch (error) {
-                    alert('❌ Erro ao importar arquivo!\nVerifique se é um arquivo válido.');
+                    showAlertModal(
+                        'Erro na Importação',
+                        `<div class="text-center">
+                            <i class="fas fa-exclamation-circle text-5xl text-red-400 mb-3"></i>
+                            <p class="text-white mb-2">Erro ao importar arquivo!</p>
+                            <p class="text-sm text-slate-400">Verifique se é um arquivo válido.</p>
+                        </div>`
+                    );
                     console.error(error);
                 }
             };
@@ -586,20 +936,24 @@
 
         function updateUI() {
             const pTable = document.getElementById('playerTable');
+            const pTableMobile = document.getElementById('playerTableMobile');
             const lLog = document.getElementById('loanList');
             const sLog = document.getElementById('salesLog');
             const simSelect = document.getElementById('simPlayer');
             const quickSaleSelect = document.getElementById('quickSalePlayer');
             const youthTable = document.getElementById('youthTable');
+            const youthTableMobile = document.getElementById('youthTableMobile');
             const filter = document.getElementById('filterPos')?.value.toUpperCase() || '';
             const filterY = document.getElementById('filterYouth')?.value.toUpperCase() || '';
 
             if (pTable) pTable.innerHTML = '';
+            if (pTableMobile) pTableMobile.innerHTML = '';
             if (lLog) lLog.innerHTML = '';
             if (sLog) sLog.innerHTML = '';
             if (simSelect) simSelect.innerHTML = '<option value="">Selecionar Atleta...</option>';
             if (quickSaleSelect) quickSaleSelect.innerHTML = '<option value="">Selecionar Jogador...</option>';
             if (youthTable) youthTable.innerHTML = '';
+            if (youthTableMobile) youthTableMobile.innerHTML = '';
 
             players.sort((a, b) => (posOrder[a.pos] || 99) - (posOrder[b.pos] || 99));
 
@@ -608,6 +962,8 @@
             players.forEach((p, i) => {
                 if (filter === "" || p.pos.includes(filter) || p.nome.toUpperCase().includes(filter)) {
                     squadSum += p.valor;
+                    
+                    // Desktop table
                     if (pTable) {
                         pTable.innerHTML += `
                             <tr class="border-b border-slate-700/50 hover:bg-slate-800/30">
@@ -623,6 +979,35 @@
                                 </td>
                             </tr>`;
                     }
+                    
+                    // Mobile cards
+                    if (pTableMobile) {
+                        pTableMobile.innerHTML += `
+                            <div class="card p-3 mb-3 bg-slate-800/50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <span class="font-bold text-white text-sm block">${p.nome}</span>
+                                        <span class="${getPosClass(p.pos)} px-2 py-0.5 rounded text-[9px] font-black uppercase inline-block mt-1">${p.pos}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-slate-400">Valor</p>
+                                        <p class="font-mono text-sm text-white">${formatMoney(p.valor)}</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 pt-2 border-t border-slate-700">
+                                    <button onclick="openEditModal(${i})" class="flex-1 px-3 py-1.5 bg-blue-600 rounded text-xs">
+                                        <i class="fa fa-edit mr-1"></i>Editar
+                                    </button>
+                                    <button onclick="sendToLoan(${i})" class="flex-1 px-3 py-1.5 bg-orange-600 rounded text-xs">
+                                        <i class="fa fa-handshake mr-1"></i>Emprestar
+                                    </button>
+                                    <button onclick="deletePlayer(${i})" class="px-3 py-1.5 bg-red-600 rounded text-xs">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>`;
+                    }
+                    
                     if (simSelect) simSelect.innerHTML += `<option value="${i}">${p.nome} (${p.pos})</option>`;
                     if (quickSaleSelect) quickSaleSelect.innerHTML += `<option value="${i}">${p.nome} - ${formatMoney(p.valor)}</option>`;
                 }
@@ -663,6 +1048,8 @@
                     totalOvr += y.overall;
                     totalPot += y.potential;
                     const growth = y.potential - y.overall;
+                    
+                    // Desktop table
                     if (youthTable) {
                         youthTable.innerHTML += `
                             <tr class="border-b border-slate-700/50 hover:bg-slate-800/30">
@@ -685,6 +1072,50 @@
                                     <button onclick="deleteYouth(${i})" class="text-red-500 hover:text-red-400" title="Excluir"><i class="fa fa-trash"></i></button>
                                 </td>
                             </tr>`;
+                    }
+                    
+                    // Mobile cards
+                    if (youthTableMobile) {
+                        youthTableMobile.innerHTML += `
+                            <div class="card p-3 mb-3 bg-slate-800/50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <span class="font-bold text-white text-sm block">${y.nome}</span>
+                                        <div class="flex gap-2 items-center mt-1">
+                                            <span class="${getPosClass(y.pos)} px-2 py-0.5 rounded text-[9px] font-black uppercase">${y.pos}</span>
+                                            <span class="text-xs text-slate-400">${y.age} anos</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-slate-400">Valor</p>
+                                        <p class="font-mono text-sm text-white">${formatMoney(y.value)}</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 mb-2">
+                                    <div class="flex-1 text-center ${getOvrClass(y.overall)} rounded p-1.5">
+                                        <p class="text-[9px]">OVR</p>
+                                        <p class="text-lg font-bold">${y.overall}</p>
+                                    </div>
+                                    <div class="flex-1 text-center bg-pink-900/50 text-pink-300 rounded p-1.5">
+                                        <p class="text-[9px]">POT</p>
+                                        <p class="text-lg font-bold">${y.potential}</p>
+                                    </div>
+                                    ${growth > 0 ? `<div class="flex items-center px-2 bg-green-900/30 text-green-400 rounded">
+                                        <span class="text-sm font-bold">+${growth}</span>
+                                    </div>` : ''}
+                                </div>
+                                <div class="flex gap-2 pt-2 border-t border-slate-700">
+                                    <button onclick="openEditYouthModal(${i})" class="flex-1 px-3 py-1.5 bg-blue-600 rounded text-xs">
+                                        <i class="fa fa-edit mr-1"></i>Editar
+                                    </button>
+                                    <button onclick="promoteYouth(${i})" class="flex-1 px-3 py-1.5 bg-green-600 rounded text-xs">
+                                        <i class="fa fa-arrow-up mr-1"></i>Promover
+                                    </button>
+                                    <button onclick="deleteYouth(${i})" class="px-3 py-1.5 bg-red-600 rounded text-xs">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>`;
                     }
                 }
             });
@@ -719,6 +1150,20 @@
                 document.getElementById('regPos').value = '';
                 document.getElementById('regValue').value = '';
                 updateUI();
+                
+                showSuccessModal(
+                    'Jogador Cadastrado!',
+                    `<div class="text-center">
+                        <div class="success-icon mb-4">
+                            <i class="fas fa-user-plus text-6xl text-blue-400"></i>
+                        </div>
+                        <p class="text-xl font-bold text-white mb-1">${n}</p>
+                        <p class="text-sm text-slate-400 mb-3">${p} • ${formatMoney(v)}</p>
+                        <p class="text-xs text-green-400">Adicionado ao elenco profissional!</p>
+                    </div>`
+                );
+            } else {
+                showAlertModal('Campos Incompletos', 'Por favor, preencha todos os campos para cadastrar o jogador.');
             }
         }
 
@@ -732,7 +1177,7 @@
 
             if (n && age && p && ovr && pot && v) {
                 if (pot < ovr) {
-                    alert('⚠️ O Potencial não pode ser menor que o Overall!');
+                    showAlertModal('Atenção', 'O Potencial não pode ser menor que o Overall!');
                     return;
                 }
                 youth.push({ nome: n, age: age, pos: p, overall: ovr, potential: pot, value: v });
@@ -743,46 +1188,128 @@
                 document.getElementById('youthPotential').value = '';
                 document.getElementById('youthValue').value = '';
                 updateUI();
+                
+                showSuccessModal(
+                    'Jogador Cadastrado na Base!',
+                    `<div class="text-center">
+                        <div class="success-icon mb-4">
+                            <i class="fas fa-seedling text-6xl text-yellow-400"></i>
+                        </div>
+                        <p class="text-xl font-bold text-white mb-1">${n}</p>
+                        <p class="text-sm text-slate-400 mb-2">${age} anos • ${p}</p>
+                        <div class="flex justify-center gap-3 mb-3">
+                            <div class="card p-2 bg-slate-800">
+                                <p class="text-[9px] text-slate-500">OVR</p>
+                                <p class="text-lg font-bold text-cyan-400">${ovr}</p>
+                            </div>
+                            <div class="card p-2 bg-slate-800">
+                                <p class="text-[9px] text-slate-500">POT</p>
+                                <p class="text-lg font-bold text-pink-400">${pot}</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-400">Adicionado à base/academia!</p>
+                    </div>`
+                );
+            } else {
+                showAlertModal('Campos Incompletos', 'Por favor, preencha todos os campos para cadastrar o jogador.');
             }
         }
 
         function openEditModal(i) {
             const p = players[i];
-            document.getElementById('modalTitle').innerText = "Editar Atleta";
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Atleta';
             document.getElementById('modalBody').innerHTML = `
-                <input type="text" id="editName" class="input-field" value="${p.nome}">
-                <input type="text" id="editPos" class="input-field" value="${p.pos}">
-                <input type="number" id="editVal" class="input-field" value="${p.valor}">
+                <div class="space-y-4">
+                    <div class="text-center mb-4">
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mx-auto flex items-center justify-center mb-3">
+                            <i class="fas fa-user text-3xl text-white"></i>
+                        </div>
+                        <p class="text-lg font-bold text-white">${p.nome}</p>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Nome do Jogador</label>
+                        <input type="text" id="editName" class="input-field" value="${p.nome}">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">Posição</label>
+                            <input type="text" id="editPos" class="input-field" value="${p.pos}">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">Valor de Mercado</label>
+                            <input type="number" id="editVal" class="input-field" value="${p.valor}">
+                        </div>
+                    </div>
+                </div>
             `;
             document.getElementById('modalConfirmBtn').onclick = () => {
                 players[i].nome = document.getElementById('editName').value;
                 players[i].pos = document.getElementById('editPos').value.toUpperCase();
                 players[i].valor = parseFloat(document.getElementById('editVal').value);
-                updateUI(); closeModal();
+                updateUI();
+                closeModal();
+                showSuccessModal(
+                    'Jogador Atualizado!',
+                    `<div class="text-center">
+                        <div class="success-icon mb-4">
+                            <i class="fas fa-check-circle text-6xl text-green-400"></i>
+                        </div>
+                        <p class="text-xl font-bold text-white">${players[i].nome}</p>
+                        <p class="text-sm text-slate-400">foi atualizado com sucesso!</p>
+                    </div>`
+                );
             };
+            document.getElementById('modalConfirmBtn').style.display = 'block';
             document.getElementById('modalOverlay').classList.remove('hidden');
         }
 
         function openEditYouthModal(i) {
             const y = youth[i];
-            document.getElementById('modalTitle').innerText = "Editar Jogador da Base";
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Jogador da Base';
             document.getElementById('modalBody').innerHTML = `
-                <input type="text" id="editYName" class="input-field mb-2" value="${y.nome}">
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <input type="number" id="editYAge" class="input-field" value="${y.age}">
-                    <input type="text" id="editYPos" class="input-field" value="${y.pos}">
+                <div class="space-y-4">
+                    <div class="text-center mb-4">
+                        <div class="w-20 h-20 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full mx-auto flex items-center justify-center mb-3">
+                            <i class="fas fa-seedling text-3xl text-white"></i>
+                        </div>
+                        <p class="text-lg font-bold text-white">${y.nome}</p>
+                        <p class="text-xs text-slate-400">${y.age} anos • ${y.pos}</p>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Nome do Jogador</label>
+                        <input type="text" id="editYName" class="input-field" value="${y.nome}">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">Idade</label>
+                            <input type="number" id="editYAge" class="input-field" value="${y.age}">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">Posição</label>
+                            <input type="text" id="editYPos" class="input-field" value="${y.pos}">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">Overall</label>
+                            <input type="number" id="editYOvr" class="input-field" value="${y.overall}">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 mb-1 block">Potencial</label>
+                            <input type="number" id="editYPot" class="input-field" value="${y.potential}">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Valor de Mercado</label>
+                        <input type="number" id="editYVal" class="input-field" value="${y.value}">
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <input type="number" id="editYOvr" class="input-field" value="${y.overall}">
-                    <input type="number" id="editYPot" class="input-field" value="${y.potential}">
-                </div>
-                <input type="number" id="editYVal" class="input-field" value="${y.value}">
             `;
             document.getElementById('modalConfirmBtn').onclick = () => {
                 const ovr = parseInt(document.getElementById('editYOvr').value);
                 const pot = parseInt(document.getElementById('editYPot').value);
                 if (pot < ovr) {
-                    alert('⚠️ O Potencial não pode ser menor que o Overall!');
+                    showAlertModal('Atenção', 'O Potencial não pode ser menor que o Overall!');
                     return;
                 }
                 youth[i].nome = document.getElementById('editYName').value;
@@ -791,18 +1318,44 @@
                 youth[i].overall = ovr;
                 youth[i].potential = pot;
                 youth[i].value = parseFloat(document.getElementById('editYVal').value);
-                updateUI(); closeModal();
+                updateUI();
+                closeModal();
+                showSuccessModal(
+                    'Jogador Atualizado!',
+                    `<div class="text-center">
+                        <div class="success-icon mb-4">
+                            <i class="fas fa-check-circle text-6xl text-green-400"></i>
+                        </div>
+                        <p class="text-xl font-bold text-white">${youth[i].nome}</p>
+                        <p class="text-sm text-slate-400">foi atualizado com sucesso!</p>
+                    </div>`
+                );
             };
+            document.getElementById('modalConfirmBtn').style.display = 'block';
             document.getElementById('modalOverlay').classList.remove('hidden');
         }
 
         function promoteYouth(i) {
-            if (confirm(`Promover ${youth[i].nome} para o elenco profissional?`)) {
-                const y = youth.splice(i, 1)[0];
-                players.push({ nome: y.nome, pos: y.pos, valor: y.value });
-                updateUI();
-                alert(`✅ ${y.nome} promovido ao elenco profissional!`);
-            }
+            const youth_player = youth[i];
+            showConfirmModal(
+                'Promover Jogador',
+                `Promover <strong class="text-blue-400">${youth_player.nome}</strong> para o elenco profissional?`,
+                () => {
+                    const y = youth.splice(i, 1)[0];
+                    players.push({ nome: y.nome, pos: y.pos, valor: y.value });
+                    updateUI();
+                    showSuccessModal(
+                        'Promoção Concluída!',
+                        `<div class="text-center">
+                            <div class="success-icon mb-4">
+                                <i class="fas fa-arrow-circle-up text-6xl text-green-400"></i>
+                            </div>
+                            <p class="text-xl font-bold text-white mb-2">${y.nome}</p>
+                            <p class="text-sm text-slate-400">foi promovido ao elenco profissional!</p>
+                        </div>`
+                    );
+                }
+            );
         }
 
         function updateQuickSalePreview() {
@@ -849,6 +1402,7 @@
 
             if (idx !== "" && salePrice) {
                 const player = players.splice(idx, 1)[0];
+                const profit = salePrice - player.valor;
                 sales.push({ nome: player.nome, cost: player.valor, sale: salePrice });
 
                 document.getElementById('quickSalePlayer').value = '';
@@ -859,21 +1413,47 @@
                 updateUI();
                 updateSalesHistory();
 
-                alert(`✅ ${player.nome} vendido por ${formatMoney(salePrice)}!\nLucro: ${formatMoney(salePrice - player.valor)}`);
+                showSuccessModal(
+                    'Venda Concluída!',
+                    `<div class="text-center">
+                        <div class="success-icon mb-4">
+                            <i class="fas fa-check-circle text-6xl text-green-400"></i>
+                        </div>
+                        <p class="text-xl font-bold text-white mb-2">${player.nome}</p>
+                        <p class="text-sm text-slate-400 mb-4">foi vendido com sucesso!</p>
+                        <div class="grid grid-cols-2 gap-4 text-left">
+                            <div class="card p-3 bg-slate-800">
+                                <p class="text-xs text-slate-500 mb-1">Valor de Venda</p>
+                                <p class="text-lg font-bold text-white">${formatMoney(salePrice)}</p>
+                            </div>
+                            <div class="card p-3 bg-slate-800">
+                                <p class="text-xs text-slate-500 mb-1">Lucro Obtido</p>
+                                <p class="text-lg font-bold ${profit >= 0 ? 'text-green-400' : 'text-red-400'}">${formatMoney(profit)}</p>
+                            </div>
+                        </div>
+                    </div>`
+                );
             } else {
-                alert('⚠️ Selecione um jogador e informe o valor da venda');
+                showAlertModal('Atenção', 'Selecione um jogador e informe o valor da venda');
             }
         }
 
         function openBulkRegisterModal() {
-            document.getElementById('modalTitle').innerText = "Cadastro em Lote - Elenco Profissional";
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-list"></i> Cadastro em Lote - Elenco Profissional';
             document.getElementById('modalBody').innerHTML = `
-                <p class="text-xs text-slate-400 mb-2">Cole a lista de jogadores (um por linha):</p>
-                <p class="text-[10px] text-slate-500 mb-3 italic">Formato: Nome, Posição, Valor</p>
-                <textarea id="bulkData" class="input-field h-48 font-mono text-xs" placeholder="Neymar, ATA, 50000000
+                <div class="space-y-3">
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                        <p class="text-sm text-slate-300 mb-2 font-semibold">📋 Formato esperado:</p>
+                        <code class="text-xs text-blue-300 bg-black/30 px-2 py-1 rounded block">Nome, Posição, Valor</code>
+                        <p class="text-xs text-slate-400 mt-2">
+                            <i class="fas fa-info-circle text-blue-400"></i> 
+                            Aceita vírgula (,) traço (-) ou pipe (|) como separador
+                        </p>
+                    </div>
+                    <textarea id="bulkData" class="input-field h-64 font-mono text-xs" placeholder="Neymar, ATA, 50000000
 Casemiro, VOL, 30000000
 Alisson, GL, 40000000"></textarea>
-                <p class="text-[10px] text-yellow-400 mt-2"><i class="fas fa-info-circle"></i> Aceita vírgula (,) traço (-) ou pipe (|) como separador</p>
+                </div>
             `;
             document.getElementById('modalConfirmBtn').onclick = () => {
                 const text = document.getElementById('bulkData').value;
@@ -895,20 +1475,37 @@ Alisson, GL, 40000000"></textarea>
 
                 updateUI();
                 closeModal();
-                alert(`✅ ${count} jogador(es) cadastrado(s) com sucesso!`);
+                showSuccessModal(
+                    'Cadastro Completo!',
+                    `<div class="text-center">
+                        <div class="success-icon mb-4">
+                            <i class="fas fa-users text-6xl text-green-400"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-white mb-2">${count}</p>
+                        <p class="text-sm text-slate-400">jogador(es) cadastrado(s) com sucesso!</p>
+                    </div>`
+                );
             };
+            document.getElementById('modalConfirmBtn').style.display = 'block';
             document.getElementById('modalOverlay').classList.remove('hidden');
         }
 
         function openBulkYouthModal() {
-            document.getElementById('modalTitle').innerText = "Cadastro em Lote - Base";
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-list"></i> Cadastro em Lote - Base/Academia';
             document.getElementById('modalBody').innerHTML = `
-                <p class="text-xs text-slate-400 mb-2">Cole a lista de jogadores da base (um por linha):</p>
-                <p class="text-[10px] text-slate-500 mb-3 italic">Formato: Nome, Idade, Posição, Overall, Potencial, Valor</p>
-                <textarea id="bulkYouthData" class="input-field h-48 font-mono text-xs" placeholder="João Silva, 17, ATA, 65, 82, 5000000
+                <div class="space-y-3">
+                    <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                        <p class="text-sm text-slate-300 mb-2 font-semibold">📋 Formato esperado:</p>
+                        <code class="text-xs text-yellow-300 bg-black/30 px-2 py-1 rounded block">Nome, Idade, Posição, Overall, Potencial, Valor</code>
+                        <p class="text-xs text-slate-400 mt-2">
+                            <i class="fas fa-info-circle text-yellow-400"></i> 
+                            Aceita vírgula (,) traço (-) ou pipe (|) como separador
+                        </p>
+                    </div>
+                    <textarea id="bulkYouthData" class="input-field h-64 font-mono text-xs" placeholder="João Silva, 17, ATA, 65, 82, 5000000
 Pedro Santos, 16, VOL, 60, 78, 3000000
 Lucas Oliveira, 18, ZAG, 68, 80, 4000000"></textarea>
-                <p class="text-[10px] text-yellow-400 mt-2"><i class="fas fa-info-circle"></i> Aceita vírgula (,) traço (-) ou pipe (|) como separador</p>
+                </div>
             `;
             document.getElementById('modalConfirmBtn').onclick = () => {
                 const text = document.getElementById('bulkYouthData').value;
@@ -934,16 +1531,552 @@ Lucas Oliveira, 18, ZAG, 68, 80, 4000000"></textarea>
 
                 updateUI();
                 closeModal();
-                alert(`✅ ${count} jogador(es) da base cadastrado(s) com sucesso!`);
+                showSuccessModal(
+                    'Cadastro Completo!',
+                    `<div class="text-center">
+                        <div class="success-icon mb-4">
+                            <i class="fas fa-seedling text-6xl text-yellow-400"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-white mb-2">${count}</p>
+                        <p class="text-sm text-slate-400">jogador(es) da base cadastrado(s) com sucesso!</p>
+                    </div>`
+                );
             };
+            document.getElementById('modalConfirmBtn').style.display = 'block';
             document.getElementById('modalOverlay').classList.remove('hidden');
         }
 
-        function sendToLoan(i) { loans.push(players.splice(i, 1)[0]); updateUI(); }
-        function returnFromLoan(i) { players.push(loans.splice(i, 1)[0]); updateUI(); }
-        function deletePlayer(i) { if (confirm("Excluir jogador?")) { players.splice(i, 1); updateUI(); } }
-        function deleteYouth(i) { if (confirm("Excluir jogador da base?")) { youth.splice(i, 1); updateUI(); } }
-        function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+        function openCareerManagementModal() {
+            document.getElementById('modalTitle').innerText = "Gerenciar Carreiras";
+            
+            let careerListHTML = '';
+            Object.keys(careers).forEach(careerKey => {
+                const career = careers[careerKey];
+                const isActive = careerKey === currentCareer;
+                const playerCount = career.players?.length || 0;
+                const youthCount = career.youth?.length || 0;
+                const salesCount = career.sales?.length || 0;
+                
+                careerListHTML += `
+                    <div class="card p-4 mb-3 ${isActive ? 'border-l-4 border-l-blue-500 bg-blue-500/10' : 'border-slate-700'} relative">
+                        ${isActive ? '<div class="absolute top-2 right-2 text-blue-400 text-xs font-bold uppercase"><i class="fas fa-star"></i> Ativa</div>' : ''}
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-white text-sm">${career.name}</h4>
+                                <p class="text-[10px] text-slate-500">Criada em: ${new Date(career.createdAt).toLocaleDateString('pt-BR')}</p>
+                                ${career.lastUpdate ? `<p class="text-[10px] text-slate-500">Última atualização: ${new Date(career.lastUpdate).toLocaleDateString('pt-BR')}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs mb-3">
+                            <div class="bg-blue-500/20 rounded p-2">
+                                <p class="text-blue-400 font-bold">${playerCount}</p>
+                                <p class="text-slate-400 text-[9px]">Profissionais</p>
+                            </div>
+                            <div class="bg-yellow-500/20 rounded p-2">
+                                <p class="text-yellow-400 font-bold">${youthCount}</p>
+                                <p class="text-slate-400 text-[9px]">Base</p>
+                            </div>
+                            <div class="bg-green-500/20 rounded p-2">
+                                <p class="text-green-400 font-bold">${salesCount}</p>
+                                <p class="text-slate-400 text-[9px]">Vendas</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            ${!isActive ? `<button onclick="switchCareer('${careerKey}')" class="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-[10px] font-bold uppercase">
+                                <i class="fas fa-exchange-alt"></i> Carregar
+                            </button>` : ''}
+                            <button onclick="renameCareer('${careerKey}')" class="flex-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-[10px] font-bold uppercase">
+                                <i class="fas fa-edit"></i> Renomear
+                            </button>
+                            ${!isActive ? `<button onclick="deleteCareer('${careerKey}')" class="flex-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded text-[10px] font-bold uppercase">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('modalBody').innerHTML = `
+                <div class="space-y-4">
+                    <div class="card p-4 border-l-4 border-l-green-500 bg-green-500/5">
+                        <h3 class="font-bold text-green-400 mb-2 flex items-center gap-2">
+                            <i class="fas fa-plus-circle"></i> Nova Carreira
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-3">Criar uma nova carreira vazia (a atual continua salva)</p>
+                        <button onclick="createNewCareer()" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-xs font-bold uppercase">
+                            <i class="fas fa-plus"></i> Criar Nova Carreira
+                        </button>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-slate-300 mb-3 flex items-center gap-2">
+                            <i class="fas fa-list"></i> Minhas Carreiras (${Object.keys(careers).length})
+                        </h3>
+                        <div class="max-h-96 overflow-y-auto space-y-2">
+                            ${careerListHTML}
+                        </div>
+                    </div>
+
+                    <div class="card p-4 border-l-4 border-l-red-500 bg-red-500/5">
+                        <h3 class="font-bold text-red-400 mb-2 flex items-center gap-2">
+                            <i class="fas fa-exclamation-triangle"></i> Zona de Perigo
+                        </h3>
+                        <button onclick="clearCurrentCareer()" class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-xs font-bold uppercase mb-2">
+                            <i class="fas fa-broom"></i> Limpar Carreira Atual
+                        </button>
+                        <button onclick="deleteAllCareers()" class="w-full px-4 py-2 bg-red-800 hover:bg-red-900 rounded-lg text-xs font-bold uppercase">
+                            <i class="fas fa-trash-alt"></i> Excluir Todas as Carreiras
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modalConfirmBtn').style.display = 'none';
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function openCareerSelector() {
+            openCareerManagementModal();
+        }
+
+        function createNewCareer() {
+            const careerNumber = Object.keys(careers).length + 1;
+            const newCareerKey = `carreira_${Date.now()}`;
+            const careerName = prompt(`Nome da nova carreira:`, `Carreira ${careerNumber}`);
+            
+            if (careerName) {
+                careers[newCareerKey] = {
+                    name: careerName,
+                    players: [],
+                    loans: [],
+                    sales: [],
+                    youth: [],
+                    createdAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem('careers_v22', JSON.stringify(careers));
+                
+                showConfirmModal(
+                    'Carreira Criada!',
+                    `A carreira "<strong class="text-blue-400">${careerName}</strong>" foi criada com sucesso!<br><br>Deseja trocar para ela agora?`,
+                    () => {
+                        switchCareer(newCareerKey);
+                    }
+                );
+            }
+        }
+
+        function switchCareer(careerKey) {
+            if (careers[careerKey]) {
+                currentCareer = careerKey;
+                players = careers[careerKey].players || [];
+                loans = careers[careerKey].loans || [];
+                sales = careers[careerKey].sales || [];
+                youth = careers[careerKey].youth || [];
+                
+                localStorage.setItem('currentCareer_v22', currentCareer);
+                document.getElementById('currentCareerName').innerText = careers[careerKey].name;
+                
+                updateUI();
+                updateSalesHistory();
+                closeModal();
+                
+                showSuccessModal(
+                    'Carreira Carregada!',
+                    `<div class="text-center">
+                        <div class="success-icon mb-4">
+                            <i class="fas fa-folder-open text-6xl text-blue-400"></i>
+                        </div>
+                        <p class="text-xl font-bold text-white mb-2">${careers[careerKey].name}</p>
+                        <p class="text-sm text-slate-400">carregada com sucesso!</p>
+                    </div>`
+                );
+            }
+        }
+
+        function renameCareer(careerKey) {
+            const newName = prompt('Novo nome da carreira:', careers[careerKey].name);
+            if (newName && newName.trim()) {
+                careers[careerKey].name = newName.trim();
+                localStorage.setItem('careers_v22', JSON.stringify(careers));
+                
+                if (careerKey === currentCareer) {
+                    document.getElementById('currentCareerName').innerText = newName.trim();
+                }
+                
+                openCareerManagementModal();
+            }
+        }
+
+        function deleteCareer(careerKey) {
+            if (careerKey === currentCareer) {
+                showAlertModal('Atenção', 'Você não pode excluir a carreira ativa!<br><br>Troque para outra carreira antes de excluir esta.');
+                return;
+            }
+            
+            showConfirmModal(
+                'Excluir Carreira',
+                `Tem certeza que deseja excluir a carreira "<strong class="text-red-400">${careers[careerKey].name}</strong>"?<br><br>Esta ação não pode ser desfeita!`,
+                () => {
+                    delete careers[careerKey];
+                    localStorage.setItem('careers_v22', JSON.stringify(careers));
+                    openCareerManagementModal();
+                    setTimeout(() => {
+                        showSuccessModal('Carreira Excluída', `<div class="text-center"><i class="fas fa-trash text-6xl text-red-400 mb-4"></i><p class="text-white">Carreira excluída com sucesso!</p></div>`);
+                    }, 300);
+                }
+            );
+        }
+
+        function clearCurrentCareer() {
+            showConfirmModal(
+                'Limpar Carreira',
+                `<div class="text-center">
+                    <i class="fas fa-broom text-5xl text-orange-400 mb-3"></i>
+                    <p class="text-white mb-2">Limpar a carreira <strong class="text-orange-400">"${careers[currentCareer].name}"</strong>?</p>
+                    <p class="text-sm text-slate-400 mb-3">Todos os jogadores, vendas e dados serão apagados!</p>
+                    <p class="text-xs text-red-400">Esta ação não pode ser desfeita!</p>
+                </div>`,
+                () => {
+                    showConfirmModal(
+                        'Confirmação Final',
+                        `<div class="text-center">
+                            <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-3 alert-shake"></i>
+                            <p class="text-xl text-white font-bold mb-2">TEM CERTEZA?</p>
+                            <p class="text-sm text-slate-400">Esta é sua última chance de cancelar!</p>
+                        </div>`,
+                        () => {
+                            players = [];
+                            loans = [];
+                            sales = [];
+                            youth = [];
+                            saveData();
+                            updateUI();
+                            updateSalesHistory();
+                            closeModal();
+                            
+                            setTimeout(() => {
+                                showSuccessModal(
+                                    'Carreira Limpa!',
+                                    `<div class="text-center">
+                                        <i class="fas fa-check-circle text-6xl text-green-400 mb-3"></i>
+                                        <p class="text-white">Carreira limpa com sucesso!</p>
+                                    </div>`
+                                );
+                            }, 300);
+                        }
+                    );
+                }
+            );
+        }
+
+        function deleteAllCareers() {
+            showConfirmModal(
+                '⚠️ PERIGO EXTREMO',
+                `<div class="text-center">
+                    <i class="fas fa-radiation text-6xl text-red-500 mb-3 alert-shake"></i>
+                    <p class="text-xl text-red-400 font-bold mb-2">EXCLUIR TODAS AS CARREIRAS?</p>
+                    <p class="text-white mb-3">TODOS os seus dados serão perdidos permanentemente!</p>
+                    <div class="card p-3 bg-red-900/20 border border-red-500/30">
+                        <p class="text-sm text-red-300">⚠️ Esta ação NÃO PODE ser desfeita!</p>
+                        <p class="text-xs text-slate-400 mt-2">Todas as ${Object.keys(careers).length} carreira(s) serão apagadas</p>
+                    </div>
+                </div>`,
+                () => {
+                    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-key"></i> Confirmação de Segurança';
+                    document.getElementById('modalTitle').parentElement.className = 'bg-gradient-to-r from-red-600 to-red-700 p-5 border-b border-red-500';
+                    document.getElementById('modalBody').innerHTML = `
+                        <div class="text-center">
+                            <i class="fas fa-lock text-5xl text-red-400 mb-4"></i>
+                            <p class="text-white mb-4">Digite <strong class="text-red-400">EXCLUIR TUDO</strong> para confirmar:</p>
+                            <input type="text" id="confirmPassword" class="input-field text-center text-lg font-bold" placeholder="Digite aqui...">
+                        </div>
+                    `;
+                    document.getElementById('modalConfirmBtn').onclick = () => {
+                        const password = document.getElementById('confirmPassword').value;
+                        if (password === 'EXCLUIR TUDO') {
+                            localStorage.clear();
+                            closeModal();
+                            
+                            // Modal de despedida antes de recarregar
+                            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-check-circle"></i> Dados Excluídos';
+                            document.getElementById('modalTitle').parentElement.className = 'bg-gradient-to-r from-green-600 to-green-700 p-5 border-b border-green-500';
+                            document.getElementById('modalBody').innerHTML = `
+                                <div class="text-center">
+                                    <i class="fas fa-trash-alt text-6xl text-green-400 mb-4"></i>
+                                    <p class="text-xl text-white font-bold mb-2">Tudo limpo!</p>
+                                    <p class="text-sm text-slate-400">Recarregando aplicação...</p>
+                                </div>
+                            `;
+                            document.getElementById('modalConfirmBtn').style.display = 'none';
+                            document.getElementById('modalOverlay').classList.remove('hidden');
+                            
+                            setTimeout(() => location.reload(), 2000);
+                        } else {
+                            showAlertModal('Senha Incorreta', 'A senha está incorreta. Nenhum dado foi excluído.');
+                        }
+                    };
+                    document.getElementById('modalConfirmBtn').style.display = 'block';
+                    document.getElementById('modalOverlay').classList.remove('hidden');
+                }
+            );
+        }
+
+        function startNewCareer() {
+            createNewCareer();
+        }
+
+        function executeNewCareer() {
+            // Função mantida para compatibilidade, mas agora redireciona para createNewCareer
+            createNewCareer();
+        }
+
+        function clearAllSquad() {
+            clearCurrentCareer();
+        }
+
+        function clearProfessionalOnly() {
+            showConfirmModal(
+                'Limpar Elenco Profissional',
+                'Excluir apenas o elenco profissional e empréstimos?<br><br><span class="text-green-400">✓ A base e o histórico de vendas serão mantidos.</span>',
+                () => {
+                    players = [];
+                    loans = [];
+                    saveData();
+                    updateUI();
+                    closeModal();
+                    
+                    setTimeout(() => {
+                        showSuccessModal(
+                            'Elenco Limpo!',
+                            `<div class="text-center">
+                                <i class="fas fa-check-circle text-6xl text-green-400 mb-3"></i>
+                                <p class="text-white">Elenco profissional limpo com sucesso!</p>
+                            </div>`
+                        );
+                    }, 300);
+                }
+            );
+        }
+
+        function clearYouthOnly() {
+            showConfirmModal(
+                'Limpar Base/Academia',
+                'Excluir todos os jogadores da base?<br><br><span class="text-green-400">✓ O elenco profissional e histórico serão mantidos.</span>',
+                () => {
+                    youth = [];
+                    saveData();
+                    updateUI();
+                    closeModal();
+                    
+                    setTimeout(() => {
+                        showSuccessModal(
+                            'Base Limpa!',
+                            `<div class="text-center">
+                                <i class="fas fa-check-circle text-6xl text-green-400 mb-3"></i>
+                                <p class="text-white">Base/Academia limpa com sucesso!</p>
+                            </div>`
+                        );
+                    }, 300);
+                }
+            );
+        }
+
+        function clearSalesHistory() {
+            showConfirmModal(
+                'Limpar Histórico de Vendas',
+                'Excluir todo o histórico de vendas?<br><br><span class="text-green-400">✓ Os jogadores cadastrados serão mantidos.</span>',
+                () => {
+                    sales = [];
+                    saveData();
+                    updateUI();
+                    updateSalesHistory();
+                    closeModal();
+                    
+                    setTimeout(() => {
+                        showSuccessModal(
+                            'Histórico Limpo!',
+                            `<div class="text-center">
+                                <i class="fas fa-check-circle text-6xl text-green-400 mb-3"></i>
+                                <p class="text-white">Histórico de vendas limpo com sucesso!</p>
+                            </div>`
+                        );
+                    }, 300);
+                }
+            );
+        }
+
+        function sendToLoan(i) { 
+            const player = players[i];
+            showConfirmModal(
+                'Emprestar Jogador',
+                `Enviar <strong class="text-orange-400">${player.nome}</strong> para empréstimo?`,
+                () => {
+                    loans.push(players.splice(i, 1)[0]);
+                    updateUI();
+                    showSuccessModal(
+                        'Empréstimo Confirmado!',
+                        `<div class="text-center">
+                            <div class="success-icon mb-4">
+                                <i class="fas fa-handshake text-6xl text-orange-400"></i>
+                            </div>
+                            <p class="text-xl font-bold text-white">${player.nome}</p>
+                            <p class="text-sm text-slate-400">foi enviado para empréstimo!</p>
+                        </div>`
+                    );
+                }
+            );
+        }
+        
+        function returnFromLoan(i) { 
+            const player = loans[i];
+            showConfirmModal(
+                'Retornar de Empréstimo',
+                `Retornar <strong class="text-blue-400">${player.nome}</strong> ao elenco principal?`,
+                () => {
+                    players.push(loans.splice(i, 1)[0]);
+                    updateUI();
+                    showSuccessModal(
+                        'Retorno Confirmado!',
+                        `<div class="text-center">
+                            <div class="success-icon mb-4">
+                                <i class="fas fa-undo text-6xl text-blue-400"></i>
+                            </div>
+                            <p class="text-xl font-bold text-white">${player.nome}</p>
+                            <p class="text-sm text-slate-400">retornou ao elenco profissional!</p>
+                        </div>`
+                    );
+                }
+            );
+        }
+        
+        function deletePlayer(i) { 
+            const player = players[i];
+            showConfirmModal(
+                'Excluir Jogador',
+                `<div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-5xl text-red-400 mb-3"></i>
+                    <p class="text-white mb-2">Excluir <strong class="text-red-400">${player.nome}</strong> permanentemente?</p>
+                    <p class="text-sm text-slate-400">Esta ação não pode ser desfeita!</p>
+                </div>`,
+                () => {
+                    players.splice(i, 1);
+                    updateUI();
+                    showSuccessModal(
+                        'Jogador Excluído',
+                        `<div class="text-center">
+                            <i class="fas fa-trash text-5xl text-red-400 mb-3"></i>
+                            <p class="text-white">${player.nome} foi removido do elenco.</p>
+                        </div>`
+                    );
+                }
+            );
+        }
+        
+        function deleteYouth(i) { 
+            const player = youth[i];
+            showConfirmModal(
+                'Excluir Jogador da Base',
+                `<div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-5xl text-red-400 mb-3"></i>
+                    <p class="text-white mb-2">Excluir <strong class="text-red-400">${player.nome}</strong> da base?</p>
+                    <p class="text-sm text-slate-400">Esta ação não pode ser desfeita!</p>
+                </div>`,
+                () => {
+                    youth.splice(i, 1);
+                    updateUI();
+                    showSuccessModal(
+                        'Jogador Excluído',
+                        `<div class="text-center">
+                            <i class="fas fa-trash text-5xl text-red-400 mb-3"></i>
+                            <p class="text-white">${player.nome} foi removido da base.</p>
+                        </div>`
+                    );
+                }
+            );
+        }
+        function closeModal() { 
+            document.getElementById('modalOverlay').classList.add('hidden');
+            document.getElementById('modalConfirmBtn').style.display = 'block';
+        }
+
+        function closeWelcomeModal() {
+            document.getElementById('welcomeModal').classList.add('hidden');
+            localStorage.setItem('lastSeenVersion', APP_VERSION);
+        }
+
+        function showWelcomeModal() {
+            document.getElementById('welcomeModal').classList.remove('hidden');
+        }
+
+        function openChangelogModal() {
+            showWelcomeModal();
+        }
+
+        function showSuccessModal(title, content) {
+            document.getElementById('modalTitle').innerHTML = `<i class="fas fa-check-circle"></i> ${title}`;
+            document.getElementById('modalTitle').parentElement.className = 'bg-gradient-to-r from-green-600 to-green-700 p-5 border-b border-green-500';
+            document.getElementById('modalBody').innerHTML = content;
+            document.getElementById('modalConfirmBtn').style.display = 'none';
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('modalTitle').parentElement.className = 'bg-gradient-to-r from-blue-600 to-blue-700 p-5 border-b border-blue-500';
+            }, 100);
+        }
+
+        function showAlertModal(title, message) {
+            document.getElementById('modalTitle').innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${title}`;
+            document.getElementById('modalTitle').parentElement.className = 'bg-gradient-to-r from-yellow-600 to-orange-600 p-5 border-b border-yellow-500';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="text-center alert-shake">
+                    <div class="mb-4">
+                        <i class="fas fa-exclamation-triangle text-6xl text-yellow-400"></i>
+                    </div>
+                    <p class="text-lg text-white">${message}</p>
+                </div>
+            `;
+            document.getElementById('modalConfirmBtn').style.display = 'none';
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('modalTitle').parentElement.className = 'bg-gradient-to-r from-blue-600 to-blue-700 p-5 border-b border-blue-500';
+            }, 100);
+        }
+
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('modalTitle').innerHTML = `<i class="fas fa-question-circle"></i> ${title}`;
+            document.getElementById('modalTitle').parentElement.className = 'bg-gradient-to-r from-purple-600 to-purple-700 p-5 border-b border-purple-500';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-question-circle text-6xl text-purple-400"></i>
+                    </div>
+                    <p class="text-lg text-white">${message}</p>
+                </div>
+            `;
+            document.getElementById('modalConfirmBtn').style.display = 'block';
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                onConfirm();
+                closeModal();
+            };
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('modalTitle').parentElement.className = 'bg-gradient-to-r from-blue-600 to-blue-700 p-5 border-b border-blue-500';
+            }, 100);
+        }
+
+        // Atualiza o nome da carreira na UI ao carregar
+        document.getElementById('currentCareerName').innerText = careers[currentCareer].name;
+
+        // Verifica se deve mostrar o modal de boas-vindas
+        const lastSeenVersion = localStorage.getItem('lastSeenVersion');
+        if (lastSeenVersion !== APP_VERSION) {
+            setTimeout(() => {
+                showWelcomeModal();
+            }, 500);
+        }
 
         updateUI();
     </script>
